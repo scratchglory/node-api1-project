@@ -3,54 +3,94 @@
 // npm install nodemon
 // npm install express (middlware to get requests and repsonse objets)
 // must add "server": "nodemon index.js" in script of jackage.json file
-
-// going to return a function
+// Using EXPRESS
 const express = require("express");
-const db = require("./db.js")
+const db = require("./db.js");
 
-// Creates the server, return a server object
+// create our server instance
 const server = express();
 
-// req an obj that contains all the info in this http request
-// res an obj that contains data that the express server is going to use to send to the user
+// middleware, allowing our api to parse the body into an obj
+// this is needed to create a user
+server.use(express.json());
+
 server.get("/", (req, res) => {
-  res.send("Hello from EXPRESS");
+  res.json({ message: "hello world" });
 });
 
-// R - Read (CRUD)
+// R - Read
+// getting users from database, returning the info to client
 server.get("/users", (req, res) => {
-    const users = db.getUsers();
-
-  res.status(200).json(users);
+  const users = db.getUsers();
+  res.json(users);
 });
 
-// R - Read individual user
+// fetching individual user
 server.get("/users/:id", (req, res) => {
-    // grab the individual user
-    const userID = req.params.id;
-    const user = db.getUserById(userID);
+  // grab the individual user
+  const userId = req.params.id;
+  const user = db.getUserById(userId);
 
-    // checking if the user exists
-    if (user) {
-        res.json(user);
-    } else {
-        res.status(404).json({message: "User Nowhere"})
-    }
-})
-
-// C - Create (CRUD)
-server.post("/users", (req, res) => {
-  const userInfo = req.body;
-  console.log("body: ", userInfo);
+  // checking if the user exists or not
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404).json({ message: "User NOWHERE" });
+  }
 });
 
-// U - Update (CRUD)
+// Create - CRUD
+// Create new user
+server.post("/users", (req, res) => {
+  // checking if body has something
+  if (!req.body.name) {
+    return res.status(404).json({
+      message: "Need USER",
+    });
+  }
+  const newUser = db.createUser({
+    // name: "Bob Doe",
+    // eliminating from hardcoding
+    name: req.body.name,
+  });
+  res.status(201).json(newUser);
+});
 
-// D - Delete (CRUD)
+// Update - CRUD
+server.put("/users/:id", (req, res) => {
+  const user = db.getUserById(req.params.id);
+
+  // can't update a user that doesn't exist, so make sure it exists first
+  if (user) {
+    const updatedUser = db.updateUser(user.id, {
+      name: req.body.name || user.name,
+    });
+
+    res.json(updatedUser);
+  } else {
+    return res.status(404).json({
+      message: "Need USER",
+    });
+  }
+});
+
+// Delete - CRUD
 server.delete("/users/:id", (req, res) => {
-    const
-})
+  const userId = req.params.id;
+  const user = db.deleteUser(userId);
 
-server.listen(5000, () => {
-  console.log("== server listening on port 5000 ==");
+  if (user) {
+    db.deleteUser(user.id);
+    // not returning anything, .end is attached
+    res.status(204).end;
+  } else {
+    return res.status(404).json({
+      message: "Need USER",
+    });
+  }
+  res.json(user);
+});
+
+server.listen(5050, () => {
+  console.log("== On Server 5050 == ");
 });
