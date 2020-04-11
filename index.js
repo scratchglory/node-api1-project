@@ -78,7 +78,7 @@ server.put("/users/:id", (req, res) => {
 server.delete("/users/:id", (req, res) => {
   const userId = req.params.id;
   const user = db.deleteUser(userId);
-
+  console.log(user);
   if (user) {
     db.deleteUser(user.id);
     // not returning anything, .end is attached
